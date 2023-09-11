@@ -1,10 +1,16 @@
 use indicatif::ProgressStyle;
+use std::io::{Write, Result, BufWriter};
 
 const IMAGE_WIDTH: u64 = 1024;
 const IMAGE_HEIGHT: u64 = 1024;
 
-fn main() {
-    print!("P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n");
+pub mod vec3;
+
+fn main() -> Result<()> {
+    let stdout = std::io::stdout().lock();
+    let mut writer = BufWriter::new(stdout);
+
+    write!(&mut writer, "P3\n{IMAGE_WIDTH} {IMAGE_HEIGHT}\n255\n")?;
 
     let progress_bar = indicatif::ProgressBar::new(IMAGE_WIDTH * IMAGE_HEIGHT)
         .with_message("Pixels written")
@@ -12,21 +18,18 @@ fn main() {
 
     for j in 0..IMAGE_HEIGHT {
         for i in 0..IMAGE_WIDTH {
-            let r = (i as f32) / ((IMAGE_WIDTH - 1) as f32);
-            let g = (j as f32) / ((IMAGE_WIDTH - 1) as f32);
-            let b = 0.0;
+            let color = vec3::Color3::new(
+                (i as f32) / ((IMAGE_WIDTH - 1) as f32),
+                (j as f32) / ((IMAGE_HEIGHT - 1) as f32), 0.0);
 
-            let ir = (255.999f32 * r) as u8;
-            let ig = (255.999f32 * g) as u8;
-            let ib = (255.999f32 * b) as u8;
-
-            println!("{ir} {ig} {ib}");
-
+            color.write_ppm(&mut writer)?;
         }
         progress_bar.inc(IMAGE_WIDTH);
     }
 
     progress_bar.finish_and_clear();
 
-    eprintln!("Done!")
+    eprintln!("Done!");
+
+    Ok(())
 }
