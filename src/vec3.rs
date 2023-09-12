@@ -1,7 +1,7 @@
 use std::ops::{self, Add, AddAssign, Mul, MulAssign};
 
 /// A vec3.
-#[derive(Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Vec3 {
     pub data: [f32; 3],
 }
@@ -129,20 +129,20 @@ impl ops::MulAssign<f32> for Vec3 {
     }
 }
 
-impl ops::Mul<&Vec3> for f32 {
+impl ops::Mul<Vec3> for f32 {
     type Output = Vec3;
 
-    fn mul(self, rhs: &Vec3) -> Self::Output {
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Self::Output {
             data: [self * rhs[0], self * rhs[1], self * rhs[2]],
         }
     }
 }
 
-impl ops::Mul<&Vec3> for Vec3 {
+impl ops::Mul<Vec3> for Vec3 {
     type Output = Vec3;
 
-    fn mul(self, rhs: &Vec3) -> Self::Output {
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Self::Output {
             data: [self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2]],
         }
@@ -164,9 +164,12 @@ impl ops::DivAssign<f32> for Vec3 {
 }
 
 /// Represents a color.
-pub type Color3 = Vec3;
+pub type Color = Vec3;
 
-impl Color3 {
+/// Represents a point in 3d space
+pub type Point3 = Vec3;
+
+impl Color {
     pub fn write_ppm<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
         write!(
             writer,
