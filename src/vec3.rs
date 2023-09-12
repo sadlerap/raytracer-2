@@ -36,12 +36,11 @@ impl Vec3 {
     }
 
     pub fn dot(&self, other: &Self) -> f32 {
-        return self
-            .data
+        self.data
             .iter()
             .zip(other.data.iter())
             .map(|(x, y)| x * y)
-            .sum();
+            .sum()
     }
 
     pub fn cross(&self, other: &Self) -> Self {
@@ -53,7 +52,7 @@ impl Vec3 {
     }
 
     pub fn len(&self) -> f32 {
-        return self.len_squared().sqrt();
+        self.len_squared().sqrt()
     }
 
     pub fn len_squared(&self) -> f32 {
@@ -103,7 +102,7 @@ impl ops::Sub<Self> for Vec3 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        return self.add(-rhs);
+        self.add(-rhs)
     }
 }
 
@@ -153,7 +152,7 @@ impl ops::Div<f32> for Vec3 {
     type Output = Self;
 
     fn div(self, rhs: f32) -> Self::Output {
-        return self.mul(rhs.recip());
+        self.mul(rhs.recip())
     }
 }
 
@@ -171,9 +170,9 @@ pub type Point3 = Vec3;
 
 impl Color {
     pub fn write_ppm<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        write!(
+        writeln!(
             writer,
-            "{} {} {}\n",
+            "{} {} {}",
             (self.x() * 255.999) as u8,
             (self.y() * 255.999) as u8,
             (self.z() * 255.999) as u8,

@@ -1,1 +1,4 @@
 /target
+
+# ignore gdb histories
+.gdb_history

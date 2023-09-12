@@ -1,6 +1,9 @@
-use std::{sync::Arc, ops::Range};
+use std::{ops::Range, sync::Arc};
 
-use crate::{vec3::{Point3, Vec3}, ray::Ray};
+use crate::{
+    ray::Ray,
+    vec3::{Point3, Vec3},
+};
 
 mod sphere;
 pub use sphere::Sphere;
@@ -15,7 +18,11 @@ pub struct HitRecord {
 impl HitRecord {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
         self.front_face = ray.direction().dot(&outward_normal) < 0.0;
-        self.normal = if self.front_face { outward_normal } else { -outward_normal };
+        self.normal = if self.front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
     }
 }
 
