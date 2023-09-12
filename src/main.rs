@@ -11,6 +11,7 @@ use crate::{
 pub mod camera;
 pub mod geometry;
 pub mod ray;
+mod util;
 pub mod vec3;
 
 fn main() -> Result<()> {
@@ -25,9 +26,10 @@ fn main() -> Result<()> {
 
     // Camera
 
-    let mut camera = camera::CameraBuilder::default()
+    let camera = camera::CameraBuilder::default()
         .with_image_width(1920)
         .with_aspect_ratio(16.0 / 9.0)
+        .with_samples_per_pixel(100)
         .build();
 
     // Render

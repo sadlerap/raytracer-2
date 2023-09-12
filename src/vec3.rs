@@ -1,4 +1,9 @@
-use std::ops::{self, Add, AddAssign, Mul, MulAssign};
+use std::{
+    num::NonZeroU32,
+    ops::{self, Add, AddAssign, Mul, MulAssign}, iter::Sum,
+};
+
+use crate::util::Range;
 
 /// A vec3.
 #[derive(Debug, Default, Copy, Clone)]
@@ -88,6 +93,12 @@ impl ops::AddAssign<Self> for Vec3 {
     }
 }
 
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.reduce(|acc, x| acc + x).unwrap_or_default()
+    }
+}
+
 impl ops::Neg for Vec3 {
     type Output = Self;
 
@@ -169,13 +180,24 @@ pub type Color = Vec3;
 pub type Point3 = Vec3;
 
 impl Color {
-    pub fn write_ppm<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+    pub fn write_ppm<W: std::io::Write>(
+        &self,
+        writer: &mut W,
+        samples_per_pixel: NonZeroU32,
+    ) -> std::io::Result<()> {
+        let scale = (u32::from(samples_per_pixel) as f32).recip();
+
+        let r = self.x() * scale;
+        let g = self.y() * scale;
+        let b = self.z() * scale;
+
+        static INTENSITY: crate::util::Range<f32> = Range::new(0.0, 0.999);
         writeln!(
             writer,
             "{} {} {}",
-            (self.x() * 255.999) as u8,
-            (self.y() * 255.999) as u8,
-            (self.z() * 255.999) as u8,
+            (256.0 * INTENSITY.clamp(r)) as u8,
+            (256.0 * INTENSITY.clamp(g)) as u8,
+            (256.0 * INTENSITY.clamp(b)) as u8,
         )
     }
 }

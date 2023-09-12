@@ -1,4 +1,4 @@
-use std::num::NonZeroU64;
+use std::num::{NonZeroU32, NonZeroU64};
 
 use indicatif::ProgressStyle;
 
@@ -12,6 +12,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Camera {
     pub aspect_ratio: f32,
+    pub samples_per_pixel: NonZeroU32,
     pub image_width: NonZeroU64,
     image_height: NonZeroU64,
     center: Point3,
@@ -21,13 +22,14 @@ pub struct Camera {
 }
 
 impl Camera {
+    /// Renders a PPM image to `output`.
     pub fn render_to_io<Output: std::io::Write, World: Hittable>(
-        &mut self,
+        &self,
         world: &World,
-        writer: &mut Output,
+        output: &mut Output,
     ) -> std::io::Result<()> {
         write!(
-            writer,
+            output,
             "P3\n{} {}\n255\n",
             self.image_width, self.image_height
         )?;
@@ -44,14 +46,11 @@ impl Camera {
 
         for j in 0..self.image_height.into() {
             for i in 0..self.image_width.into() {
-                let pixel_center = self.pixel00_loc
-                    + (i as f32 * self.pixel_delta_u)
-                    + (j as f32 * self.pixel_delta_v);
-                let ray_direction = pixel_center - self.center;
-                let r = Ray::new(self.center, ray_direction);
-
-                let color = self.ray_color(&r, world);
-                color.write_ppm(writer)?;
+                let color: Color = (0..u32::from(self.samples_per_pixel)).into_iter()
+                    .map(|_| self.get_ray(i, j))
+                    .map(|ray| self.ray_color(&ray, world))
+                    .sum();
+                color.write_ppm(output, self.samples_per_pixel)?;
             }
             progress_bar.inc(self.image_width.into());
         }
@@ -60,6 +59,22 @@ impl Camera {
 
         eprintln!("Done!");
         Ok(())
+    }
+
+    /// Samples a ray for the pixel at (i, j).
+    fn get_ray(&self, i: u64, j: u64) -> Ray {
+        let pixel_center =
+            self.pixel00_loc + (i as f32 * self.pixel_delta_u) + (j as f32 * self.pixel_delta_v);
+        let pixel_sample = pixel_center + self.pixel_sample_square();
+
+        Ray::new(self.center, pixel_sample - self.center)
+    }
+
+    fn pixel_sample_square(&self) -> Vec3 {
+        let px: f32 = -0.5 + rand::random::<f32>();
+        let py: f32 = -0.5 + rand::random::<f32>();
+
+        (px * self.pixel_delta_u) + (py * self.pixel_delta_v)
     }
 
     fn ray_color<World: Hittable>(&self, ray: &Ray, world: &World) -> Color {
@@ -78,12 +93,17 @@ impl Camera {
 #[derive(Debug, Default)]
 pub struct CameraBuilder {
     pub aspect_ratio: Option<f32>,
+    pub samples_per_pixel: Option<NonZeroU32>,
     pub image_width: Option<NonZeroU64>,
 }
 
 impl From<CameraBuilder> for Camera {
     fn from(val: CameraBuilder) -> Self {
         let aspect_ratio = val.aspect_ratio.unwrap_or(1.0);
+        let samples_per_pixel = val
+            .samples_per_pixel
+            .unwrap_or_else(|| unsafe { NonZeroU32::new_unchecked(10) });
+
         let image_width = val
             .image_width
             // Safety: new_unchecked requires the argument to be non-zero, which 100 satisfies.
@@ -110,6 +130,7 @@ impl From<CameraBuilder> for Camera {
 
         Camera {
             aspect_ratio,
+            samples_per_pixel,
             image_width,
             image_height,
             center,
@@ -127,10 +148,17 @@ impl CameraBuilder {
         self
     }
 
-    /// Sets the image width for the camera.  If the passed image width is zero, then the camera
-    /// uses its default.
+    /// Sets the image width for the camera.  If the passed image width is `0`, then the camera
+    /// uses the default of 100 pixels.
     pub fn with_image_width(mut self, image_width: u64) -> Self {
         self.image_width = NonZeroU64::new(image_width);
+        self
+    }
+
+    /// Sets the sample depth for the camera.  If the passed sample depth is `0`, then the camera
+    /// uses its default of `10` samples per pixel.
+    pub fn with_samples_per_pixel(mut self, samples_per_pixel: u32) -> Self {
+        self.samples_per_pixel = NonZeroU32::new(samples_per_pixel);
         self
     }
 
