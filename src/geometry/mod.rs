@@ -11,6 +11,7 @@ pub use sphere::Sphere;
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
+    pub material: Arc<dyn crate::material::Material>,
     pub t: f32,
     pub front_face: bool,
 }

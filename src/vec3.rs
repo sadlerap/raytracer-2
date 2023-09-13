@@ -105,6 +105,16 @@ impl Vec3 {
     pub fn normalize(&self) -> Self {
         *self / self.len()
     }
+
+    pub fn near_zero(&self) -> bool {
+        // is the vector close to zero?
+        let s = 1e-8;
+        self[0].abs() < s && self[1].abs() < s && self[2].abs() < s
+    }
+
+    pub fn reflect(&self, n: Vec3) -> Vec3 {
+        *self - 2.0 * self.dot(&n) * n
+    }
 }
 
 impl ops::Index<usize> for Vec3 {
