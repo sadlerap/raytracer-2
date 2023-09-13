@@ -8,6 +8,6 @@ pub use dielectric::*;
 pub use lambertian::*;
 pub use metal::*;
 
-pub trait Material: std::fmt::Debug {
+pub trait Material: std::fmt::Debug + Send + Sync {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> Option<(Ray, Color)>;
 }

@@ -33,11 +33,12 @@ fn main() -> Result<()> {
     // World
 
     let mut world = HittableList::default();
-    world.add(Arc::new(Sphere::new(
+    let ground_sphere = Sphere::new(
         Point3::new(0.0, -100.5, -1.0),
         100.0,
         material_ground,
-    )));
+    );
+    world.add(Arc::new(ground_sphere));
     world.add(Arc::new(Sphere::new(
         Point3::new(0.0, 0.0, -1.0),
         0.5,
@@ -66,7 +67,7 @@ fn main() -> Result<()> {
         .with_aspect_ratio(16.0 / 9.0)
         .with_samples_per_pixel(1000)
         .with_recursion_depth(50)
-        .with_vertical_field_of_view(20.0)
+        .with_vertical_field_of_view(90.0)
         .look_from(Point3::new(-2.0, 2.0, 1.0))
         .look_at(Point3::new(0.0, 0.0, -1.0))
         .with_up(Vec3::new(0.0, 1.0, 0.0))

@@ -2,7 +2,7 @@ use std::{ops::Range, sync::Arc};
 
 use crate::{
     ray::Ray,
-    vec3::{Point3, Vec3},
+    vec3::{Point3, Vec3}, material::Material,
 };
 
 mod sphere;
@@ -11,7 +11,7 @@ pub use sphere::Sphere;
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Arc<dyn crate::material::Material>,
+    pub material: Arc<dyn Material>,
     pub t: f32,
     pub front_face: bool,
 }
@@ -27,13 +27,13 @@ impl HitRecord {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: &Range<f32>) -> Option<HitRecord>;
 }
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Arc<dyn Hittable>>,
+    objects: Vec<Arc<dyn Hittable + Sync + Send>>,
 }
 
 impl HittableList {
@@ -41,7 +41,7 @@ impl HittableList {
         self.objects.clear()
     }
 
-    pub fn add(&mut self, object: Arc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable + std::marker::Sync + std::marker::Send>) {
         self.objects.push(object)
     }
 }

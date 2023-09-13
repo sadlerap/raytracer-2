@@ -10,6 +10,7 @@ use crate::{
 pub struct Sphere {
     center: Point3,
     radius: f32,
+    radius_recip: f32,
     material: Arc<dyn Material>,
 }
 
@@ -18,6 +19,7 @@ impl Sphere {
         Self {
             center,
             radius,
+            radius_recip: radius.recip(),
             material,
         }
     }
@@ -37,16 +39,17 @@ impl Hittable for Sphere {
         let sqrtd = discriminant.sqrt();
 
         // Find the nearest root that lies in the acceptable range.
-        let mut root = (-half_b - sqrtd) / a;
+        let a_recip = a.recip();
+        let mut root = (-half_b - sqrtd) * a_recip;
         if !ray_t.contains(&root) {
-            root = (-half_b + sqrtd) / a;
+            root = (-half_b + sqrtd) * a_recip;
             if !ray_t.contains(&root) {
                 return None;
             }
         }
 
         let point = r.at(root);
-        let normal = (point - self.center) / self.radius;
+        let normal = (point - self.center) * self.radius_recip;
         let mut hit_record = HitRecord {
             point,
             normal,
@@ -54,7 +57,7 @@ impl Hittable for Sphere {
             front_face: false,
             material: self.material.clone(),
         };
-        let outward_normal = (point - self.center) / self.radius;
+        let outward_normal = (point - self.center) * self.radius_recip;
         hit_record.set_face_normal(r, outward_normal);
         Some(hit_record)
     }

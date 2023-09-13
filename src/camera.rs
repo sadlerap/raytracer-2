@@ -4,6 +4,7 @@ use std::{
 };
 
 use indicatif::ProgressStyle;
+use rayon::prelude::*;
 
 use crate::{
     geometry::Hittable,
@@ -29,11 +30,15 @@ pub struct Camera {
 
 impl Camera {
     /// Renders a PPM image to `output`.
-    pub fn render_to_io<Output: std::io::Write, World: Hittable>(
+    pub fn render_to_io<Output, World>(
         &self,
         world: &World,
         output: &mut Output,
-    ) -> std::io::Result<()> {
+    ) -> std::io::Result<()>
+    where
+        Output: std::io::Write,
+        World: Hittable + std::marker::Sync,
+    {
         write!(
             output,
             "P3\n{} {}\n255\n",
@@ -50,15 +55,30 @@ impl Camera {
                     .unwrap(),
                 );
 
-        for j in 0..self.image_height.into() {
-            for i in 0..self.image_width.into() {
+        let progress_bar_ref = &progress_bar;
+
+        let num_pixels = (u64::from(self.image_width) * u64::from(self.image_height)) as usize;
+        let mut buffer = vec![Color::default(); num_pixels];
+
+        buffer
+            .par_iter_mut()
+            .enumerate()
+            .map(|(index, dest)| {
+                let i = index as u64 % u64::from(self.image_width);
+                let j = index as u64 / u64::from(self.image_width);
+                (i as u64, j as u64, dest)
+            })
+            .for_each(move |(i, j, dest)| {
                 let color: Color = (0..u32::from(self.samples_per_pixel))
                     .map(|_| self.get_ray(i, j))
                     .map(|ray| self.ray_color(&ray, self.max_depth.into(), world))
                     .sum();
-                color.write_ppm(output, self.samples_per_pixel)?;
-            }
-            progress_bar.inc(self.image_width.into());
+                *dest = color;
+                progress_bar_ref.inc(1);
+            });
+
+        for color in buffer {
+            color.write_ppm(output, self.samples_per_pixel)?;
         }
 
         progress_bar.finish_and_clear();
