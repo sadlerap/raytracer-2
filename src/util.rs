@@ -28,7 +28,9 @@ impl<Idx> Range<Idx>
 where
     Idx: PartialEq + PartialOrd,
 {
-    pub const fn new(start: Idx, end: Idx) -> Self { Self { start, end } }
+    pub const fn new(start: Idx, end: Idx) -> Self {
+        Self { start, end }
+    }
 
     #[allow(dead_code)]
     pub fn contains(&self, value: Idx) -> bool {

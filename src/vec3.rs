@@ -1,7 +1,10 @@
 use std::{
+    iter::Sum,
     num::NonZeroU32,
-    ops::{self, Add, AddAssign, Mul, MulAssign}, iter::Sum,
+    ops::{self, Add, AddAssign, Mul, MulAssign},
 };
+
+use rand::Rng;
 
 use crate::util::Range;
 
@@ -14,6 +17,41 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { data: [x, y, z] }
+    }
+
+    pub fn random() -> Self {
+        Self::new(rand::random(), rand::random(), rand::random())
+    }
+
+    pub fn random_in_range(min: f32, max: f32) -> Self {
+        let x = rand::thread_rng().gen_range(min..max);
+        let y = rand::thread_rng().gen_range(min..max);
+        let z = rand::thread_rng().gen_range(min..max);
+        Self::new(x, y, z)
+    }
+
+    pub fn random_on_unit_sphere() -> Self {
+        // See https://mathworld.wolfram.com/SpherePointPicking.html for why this works.
+        let theta = rand::thread_rng().gen_range(0.0..std::f32::consts::TAU);
+        let u: f32 = rand::thread_rng().gen_range(-1.0..1.0);
+
+        let (sin_theta, cos_theta) = theta.sin_cos();
+        let sin_phi = u.mul_add(-u, 1.0).sqrt();
+
+        let x = cos_theta * sin_phi;
+        let y = sin_theta * sin_phi;
+        let z = u;
+
+        Self::new(x, y, z)
+    }
+
+    pub fn random_on_hemisphere(normal: &Self) -> Self {
+        let on_unit_sphere = Self::random_on_unit_sphere();
+        if on_unit_sphere.dot(normal).is_sign_positive() {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
     }
 
     pub fn x(&self) -> f32 {
@@ -187,9 +225,9 @@ impl Color {
     ) -> std::io::Result<()> {
         let scale = (u32::from(samples_per_pixel) as f32).recip();
 
-        let r = self.x() * scale;
-        let g = self.y() * scale;
-        let b = self.z() * scale;
+        let r = linear_to_gamma(self.x() * scale);
+        let g = linear_to_gamma(self.y() * scale);
+        let b = linear_to_gamma(self.z() * scale);
 
         static INTENSITY: crate::util::Range<f32> = Range::new(0.0, 0.999);
         writeln!(
@@ -200,4 +238,8 @@ impl Color {
             (256.0 * INTENSITY.clamp(b)) as u8,
         )
     }
+}
+
+fn linear_to_gamma(linear_component: f32) -> f32 {
+    linear_component.sqrt()
 }

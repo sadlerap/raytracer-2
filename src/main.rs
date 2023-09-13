@@ -29,12 +29,13 @@ fn main() -> Result<()> {
     let camera = camera::CameraBuilder::default()
         .with_image_width(1920)
         .with_aspect_ratio(16.0 / 9.0)
-        .with_samples_per_pixel(100)
+        .with_samples_per_pixel(500)
+        .with_recursion_depth(50)
         .build();
 
     // Render
 
-    camera.render_to_io(&mut world, &mut writer)?;
+    camera.render_to_io(&world, &mut writer)?;
 
     Ok(())
 }

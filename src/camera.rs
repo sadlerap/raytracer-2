@@ -19,6 +19,7 @@ pub struct Camera {
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    max_depth: NonZeroU32,
 }
 
 impl Camera {
@@ -46,9 +47,9 @@ impl Camera {
 
         for j in 0..self.image_height.into() {
             for i in 0..self.image_width.into() {
-                let color: Color = (0..u32::from(self.samples_per_pixel)).into_iter()
+                let color: Color = (0..u32::from(self.samples_per_pixel))
                     .map(|_| self.get_ray(i, j))
-                    .map(|ray| self.ray_color(&ray, world))
+                    .map(|ray| self.ray_color(&ray, self.max_depth.into(), world))
                     .sum();
                 color.write_ppm(output, self.samples_per_pixel)?;
             }
@@ -77,9 +78,15 @@ impl Camera {
         (px * self.pixel_delta_u) + (py * self.pixel_delta_v)
     }
 
-    fn ray_color<World: Hittable>(&self, ray: &Ray, world: &World) -> Color {
-        if let Some(record) = world.hit(ray, &(0.0..f32::INFINITY)) {
-            return 0.5 * (record.normal + Color::new(1.0, 1.0, 1.0));
+    fn ray_color<World: Hittable>(&self, ray: &Ray, depth: u32, world: &World) -> Color {
+        // if we've exceeded max depth, don't gather any more light.
+        if depth == 0 {
+            return Color::default();
+        }
+
+        if let Some(record) = world.hit(ray, &(0.001..f32::INFINITY)) {
+            let direction = record.normal + Vec3::random_on_unit_sphere();
+            return 0.5 * self.ray_color(&Ray::new(record.point, direction), depth - 1, world);
         }
         let unit_direction = ray.direction().normalize();
         let a = 0.5 * (unit_direction.y() + 1.0);
@@ -95,6 +102,7 @@ pub struct CameraBuilder {
     pub aspect_ratio: Option<f32>,
     pub samples_per_pixel: Option<NonZeroU32>,
     pub image_width: Option<NonZeroU64>,
+    pub max_depth: Option<NonZeroU32>,
 }
 
 impl From<CameraBuilder> for Camera {
@@ -102,6 +110,10 @@ impl From<CameraBuilder> for Camera {
         let aspect_ratio = val.aspect_ratio.unwrap_or(1.0);
         let samples_per_pixel = val
             .samples_per_pixel
+            .unwrap_or_else(|| unsafe { NonZeroU32::new_unchecked(10) });
+
+        let max_depth = val
+            .max_depth
             .unwrap_or_else(|| unsafe { NonZeroU32::new_unchecked(10) });
 
         let image_width = val
@@ -131,6 +143,7 @@ impl From<CameraBuilder> for Camera {
         Camera {
             aspect_ratio,
             samples_per_pixel,
+            max_depth,
             image_width,
             image_height,
             center,
@@ -159,6 +172,12 @@ impl CameraBuilder {
     /// uses its default of `10` samples per pixel.
     pub fn with_samples_per_pixel(mut self, samples_per_pixel: u32) -> Self {
         self.samples_per_pixel = NonZeroU32::new(samples_per_pixel);
+        self
+    }
+
+    /// Sets the recursion depth for ray reflections.  Defaults to 10.
+    pub fn with_recursion_depth(mut self, depth: u32) -> Self {
+        self.max_depth = NonZeroU32::new(depth);
         self
     }
 
