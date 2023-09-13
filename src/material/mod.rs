@@ -1,8 +1,10 @@
-use crate::{ray::Ray, geometry::HitRecord, vec3::Color};
+use crate::{geometry::HitRecord, ray::Ray, vec3::Color};
 
+mod dielectric;
 mod lambertian;
 mod metal;
 
+pub use dielectric::*;
 pub use lambertian::*;
 pub use metal::*;
 

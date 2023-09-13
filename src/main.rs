@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+use material::Dielectric;
 use vec3::Color;
 
 use crate::{
@@ -24,8 +25,8 @@ fn main() -> Result<()> {
     // Materials
 
     let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Color::new(0.7, 0.3, 0.3)));
-    let material_left = Arc::new(Metal::new(Color::new(0.8, 0.8, 0.8), 0.3));
+    let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
+    let material_left = Arc::new(Dielectric::new(1.5));
     let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 1.0));
 
     // World
@@ -55,10 +56,10 @@ fn main() -> Result<()> {
     // Camera
 
     let camera = camera::CameraBuilder::default()
-        .with_image_width(1920)
+        .with_image_width(1280)
         .with_aspect_ratio(16.0 / 9.0)
         .with_samples_per_pixel(500)
-        .with_recursion_depth(50)
+        .with_recursion_depth(10)
         .build();
 
     // Render
