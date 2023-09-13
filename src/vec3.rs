@@ -1,10 +1,11 @@
 use std::{
+    f32::consts::TAU,
     iter::Sum,
     num::NonZeroU32,
     ops::{self, Add, AddAssign, Mul, MulAssign},
 };
 
-use rand::Rng;
+use rand::{random, thread_rng, Rng};
 
 use crate::util::Range;
 
@@ -52,6 +53,15 @@ impl Vec3 {
         } else {
             -on_unit_sphere
         }
+    }
+
+    pub fn random_in_unit_disc() -> Self {
+        let r = random::<f32>().sqrt();
+        let theta = thread_rng().gen_range(0.0..TAU);
+
+        let x = r * theta.cos();
+        let y = r * theta.sin();
+        Self::new(x, y, 0.0)
     }
 
     pub fn x(&self) -> f32 {

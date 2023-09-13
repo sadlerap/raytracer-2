@@ -15,7 +15,11 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new(center: Point3, radius: f32, material: Arc<dyn Material>) -> Self {
-        Self { center, radius, material }
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -48,7 +52,7 @@ impl Hittable for Sphere {
             normal,
             t: root,
             front_face: false,
-            material: self.material.clone()
+            material: self.material.clone(),
         };
         let outward_normal = (point - self.center) / self.radius;
         hit_record.set_face_normal(r, outward_normal);

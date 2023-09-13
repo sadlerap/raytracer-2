@@ -1,4 +1,4 @@
-use crate::{ray::Ray, geometry::HitRecord, vec3::Color};
+use crate::{geometry::HitRecord, ray::Ray, vec3::Color};
 
 use super::Material;
 
@@ -35,7 +35,9 @@ impl Material for Dielectric {
 }
 
 impl Dielectric {
-    pub fn new(ior: f32) -> Self { Self { ior } }
+    pub fn new(ior: f32) -> Self {
+        Self { ior }
+    }
 }
 
 fn reflectance(cosine: f32, ref_ior: f32) -> f32 {

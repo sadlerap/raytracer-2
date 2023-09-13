@@ -1,4 +1,7 @@
-use crate::{vec3::{Color, Vec3}, ray::Ray};
+use crate::{
+    ray::Ray,
+    vec3::{Color, Vec3},
+};
 
 use super::Material;
 
@@ -9,7 +12,9 @@ pub struct Lambertian {
 }
 
 impl Lambertian {
-    pub fn new(albedo: Color) -> Self { Self { albedo } }
+    pub fn new(albedo: Color) -> Self {
+        Self { albedo }
+    }
 }
 
 impl Material for Lambertian {
@@ -20,6 +25,6 @@ impl Material for Lambertian {
         }
         let scattered = Ray::new(hit_record.point, scatter_direction);
         let attenuation = self.albedo;
-        return Some((scattered, attenuation))
+        return Some((scattered, attenuation));
     }
 }
