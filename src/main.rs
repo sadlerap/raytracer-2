@@ -177,6 +177,7 @@ fn main() -> Result<()> {
         .write(true)
         .read(false)
         .truncate(true)
+        .create(true)
         .open(output.as_path())?;
     let mut writer = BufWriter::new(file);
 
