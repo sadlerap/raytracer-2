@@ -1,7 +1,4 @@
-use std::{
-    io::{BufWriter, Result},
-    sync::Arc,
-};
+use std::io::{BufWriter, Result};
 
 use material::{Dielectric, Metal};
 use vec3::{Color, Vec3};
@@ -25,40 +22,25 @@ fn main() -> Result<()> {
 
     // Materials
 
-    let material_ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Color::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(Dielectric::new(1.5));
-    let material_right = Arc::new(Metal::new(Color::new(0.8, 0.6, 0.2), 0.0));
+    let material_ground = Lambertian::new(Color::new(0.8, 0.8, 0.0));
+    let material_center = Lambertian::new(Color::new(0.1, 0.2, 0.5));
+    let material_left = Dielectric::new(1.5);
+    let material_right = Metal::new(Color::new(0.8, 0.6, 0.2), 0.0);
 
     // World
 
+    let ground_sphere = Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0, &material_ground);
+    let center_sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5, &material_center);
+    let left_sphere = Sphere::new(Point3::new(-1.0, 0.0, -1.0), 0.5, &material_left);
+    let left_inner_sphere = Sphere::new(Point3::new(-1.0, 0.0, -1.0), -0.4, &material_left);
+    let right_sphere = Sphere::new(Point3::new(1.0, 0.0, -1.0), 0.5, &material_right);
+
     let mut world = HittableList::default();
-    let ground_sphere = Sphere::new(
-        Point3::new(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    );
-    world.add(Arc::new(ground_sphere));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        0.5,
-        material_left.clone(),
-    )));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(-1.0, 0.0, -1.0),
-        -0.4,
-        material_left,
-    )));
-    world.add(Arc::new(Sphere::new(
-        Point3::new(1.0, 0.0, -1.0),
-        0.5,
-        material_right,
-    )));
+    world.add(&ground_sphere);
+    world.add(&center_sphere);
+    world.add(&left_sphere);
+    world.add(&left_inner_sphere);
+    world.add(&right_sphere);
 
     // Camera
 
@@ -76,6 +58,7 @@ fn main() -> Result<()> {
     // Render
 
     camera.render_to_io(&world, &mut writer)?;
+    drop(world);
 
     Ok(())
 }

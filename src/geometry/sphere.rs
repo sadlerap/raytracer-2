@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     geometry::{HitRecord, Hittable},
     material::Material,
@@ -7,15 +5,15 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct Sphere {
+pub struct Sphere<'a> {
     center: Point3,
     radius: f32,
     radius_recip: f32,
-    material: Arc<dyn Material>,
+    material: &'a dyn Material,
 }
 
-impl Sphere {
-    pub fn new(center: Point3, radius: f32, material: Arc<dyn Material>) -> Self {
+impl<'a> Sphere<'a> {
+    pub fn new(center: Point3, radius: f32, material: &'a dyn Material) -> Self {
         Self {
             center,
             radius,
@@ -25,7 +23,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl Hittable for Sphere<'_> {
     fn hit(&self, r: &crate::ray::Ray, ray_t: &std::ops::Range<f32>) -> Option<HitRecord> {
         let oc = r.origin() - self.center;
         let a = r.direction().len_squared();
@@ -55,7 +53,7 @@ impl Hittable for Sphere {
             normal,
             t: root,
             front_face: false,
-            material: self.material.clone(),
+            material: self.material,
         };
         let outward_normal = (point - self.center) * self.radius_recip;
         hit_record.set_face_normal(r, outward_normal);

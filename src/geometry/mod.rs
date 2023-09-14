@@ -1,22 +1,26 @@
-use std::{ops::Range, sync::Arc};
+use std::{
+    marker::{Send, Sync},
+    ops::Range,
+};
 
 use crate::{
+    material::Material,
     ray::Ray,
-    vec3::{Point3, Vec3}, material::Material,
+    vec3::{Point3, Vec3},
 };
 
 mod sphere;
 pub use sphere::Sphere;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Arc<dyn Material>,
+    pub material: &'a dyn Material,
     pub t: f32,
     pub front_face: bool,
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
         self.front_face = ray.direction().dot(&outward_normal) < 0.0;
         self.normal = if self.front_face {
@@ -32,21 +36,21 @@ pub trait Hittable: Send + Sync {
 }
 
 #[derive(Default)]
-pub struct HittableList {
-    objects: Vec<Arc<dyn Hittable + Sync + Send>>,
+pub struct HittableList<'a> {
+    objects: Vec<&'a (dyn Hittable + Sync + Send)>,
 }
 
-impl HittableList {
+impl<'a> HittableList<'a> {
     pub fn clear(&mut self) {
         self.objects.clear()
     }
 
-    pub fn add(&mut self, object: Arc<dyn Hittable + std::marker::Sync + std::marker::Send>) {
+    pub fn add(&mut self, object: &'a (dyn Hittable + Sync + Send)) {
         self.objects.push(object)
     }
 }
 
-impl Hittable for HittableList {
+impl Hittable for HittableList<'_> {
     fn hit(&self, r: &Ray, ray_t: &Range<f32>) -> Option<HitRecord> {
         let mut closest_so_far = ray_t.end;
         let mut rec = None;
