@@ -50,7 +50,7 @@ impl Camera {
                 .with_message("Pixels written")
                 .with_style(
                     ProgressStyle::with_template(
-                        "[{elapsed_precise}] {bar:40.cyan} {msg}: {percent:>3}%",
+                        "[{elapsed_precise:8.green}] {bar:40.cyan} [ETA: {eta_precise:8.magenta}] {msg}: {percent:>3}%",
                     )
                     .unwrap(),
                 );
@@ -66,7 +66,7 @@ impl Camera {
             .map(|(index, dest)| {
                 let i = index as u64 % u64::from(self.image_width);
                 let j = index as u64 / u64::from(self.image_width);
-                (i as u64, j as u64, dest)
+                (i, j, dest)
             })
             .for_each(move |(i, j, dest)| {
                 let color: Color = (0..u32::from(self.samples_per_pixel))
@@ -103,8 +103,8 @@ impl Camera {
     }
 
     fn pixel_sample_square(&self) -> Vec3 {
-        let px: f32 = -0.5 + rand::random::<f32>();
-        let py: f32 = -0.5 + rand::random::<f32>();
+        let px: f32 = rand::random::<f32>() - 0.5;
+        let py: f32 = rand::random::<f32>() - 0.5;
 
         (px * self.pixel_delta_u) + (py * self.pixel_delta_v)
     }
